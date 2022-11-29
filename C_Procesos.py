@@ -43,7 +43,7 @@ class C_Procesos(QWidget):
             return
         
         self.ids.append(self.ui.ID_SB.value())
-        proceso = Proceso(self.ui.Nombre_TE.toPlainText(), self.ui.ValorA_SB.value(), self.ui.ValorB_SB.value(), operacion_cont, self.ui.Tiempo_SB.value())
+        proceso = Proceso(self.ui.ID_SB.value(), self.ui.Nombre_TE.toPlainText(), self.ui.ValorA_SB.value(), self.ui.ValorB_SB.value(), operacion_cont, self.ui.Tiempo_SB.value())
         self.operaciones[self.ui.ID_SB.value()] = proceso
 
         if(self.procesos == self.cont):
