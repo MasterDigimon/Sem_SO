@@ -62,11 +62,16 @@ class Simulacion(QWidget):
                     QApplication.processEvents()
 
 
-                self.estado_lotes[i - 1] = "Terminado"
+                
                 terminados.append(x)
                 self.imprimir_terminados(terminados)
                 self.imprimir_lotes()
                 QApplication.processEvents()
+
+            self.estado_lotes[i - 1] = "Terminado"
+            self.imprimir_terminados(terminados)
+            self.imprimir_lotes()
+            QApplication.processEvents()
         
         
         pass

@@ -1,5 +1,3 @@
-
-
 class Proceso():
     def __init__(self,_id, _nombre, _A, _B, _operacion, _tiempo):
         self.id = _id
