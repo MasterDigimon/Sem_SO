@@ -108,6 +108,7 @@ class Simulacion(QWidget):
                         time.sleep(.1)
                         cont_tiempo += .1
                         x.tiempoTranscurrido = round(x.tiempoTranscurrido + .1, 2)
+                        x.tiempoRestante = round(x.tiempoRestante - .1, 2)
                         self.ui.Tiempo_TB.setText(str(round(cont_tiempo, 2)) + " s")
                         self.ui.Lotes_Restantes_TB.setText(str(lotes_restantes))
                         y += 1
@@ -117,7 +118,7 @@ class Simulacion(QWidget):
 
                     
                 
-                if(x.tiempo == x.tiempoTranscurrido):
+                if(x.tiempo == x.tiempoTranscurrido and self.estado_procesos[x.id] != "Terminado"):
                     self.estado_procesos[x.id] = "Terminado"
                     terminados.append(x)
 
@@ -172,9 +173,9 @@ class Simulacion(QWidget):
         return
 
     def imprimir_ProcesoEjec(self, lote):
-        headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido"]
+        headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido", "Tiempo Restante"]
 
-        self.ui.Simulacion_TW.setColumnCount(4)
+        self.ui.Simulacion_TW.setColumnCount(5)
         self.ui.Simulacion_TW.setRowCount(len(lote))
         self.ui.Simulacion_TW.setHorizontalHeaderLabels(headers)
 
@@ -183,11 +184,13 @@ class Simulacion(QWidget):
             operacion = QTableWidgetItem(str(lote[i].Return_operacion()))
             Tiempo_Esperado = QTableWidgetItem(str(lote[i].tiempo))
             Tiempo_Transcurrido = QTableWidgetItem(str(lote[i].tiempoTranscurrido))
+            Tiempo_Restante = QTableWidgetItem(str(lote[i].tiempoRestante))
 
             self.ui.Simulacion_TW.setItem(i, 0, id)
             self.ui.Simulacion_TW.setItem(i, 1, operacion)
             self.ui.Simulacion_TW.setItem(i, 2, Tiempo_Esperado)
             self.ui.Simulacion_TW.setItem(i, 3, Tiempo_Transcurrido)
+            self.ui.Simulacion_TW.setItem(i, 4, Tiempo_Restante)
 
         pass
 
