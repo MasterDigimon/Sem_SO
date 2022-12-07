@@ -1,13 +1,15 @@
+
+
 class Proceso():
-    def __init__(self,_id, _nombre, _A, _B, _operacion, _tiempo):
+    def __init__(self,_id, _A, _B, _operacion, _tiempo):
         self.id = _id
-        self.nombre = _nombre
         self.valorA = _A
         self.valorB = _B
         self.operacion = _operacion
         self.tiempo = _tiempo
         self.tiempoRestante = _tiempo
         self.tiempoTranscurrido = 0
+        self.error = None
         return
 
     def iniciar_sim(self):
@@ -26,7 +28,7 @@ class Proceso():
             return self.valorA * self.valorB
 
         elif(self.operacion == 3):
-            return self.valorA / self.valorB
+            return round(self.valorA / self.valorB, 2)
 
         elif(self.operacion == 4):
             return self.valorA % self.valorB
@@ -40,18 +42,20 @@ class Proceso():
 
     def Return_operacion(self):
         if(self.operacion == 0):
-            return "Suma"
+            return str(self.valorA) + " + " + str(self.valorB)
         elif(self.operacion == 1):
-            return "Resta"
+            return str(self.valorA) + " - " + str(self.valorB)
 
         elif(self.operacion == 2):
-            return "Multiplicacion"
+            return str(self.valorA) + " x " + str(self.valorB)
 
         elif(self.operacion == 3):
-            return "Division"
+            return str(self.valorA) + " / " + str(self.valorB)
 
         elif(self.operacion == 4):
-            return "Modulo"
+            return str(self.valorA) + " % " + str(self.valorB)
 
         elif(self.operacion == 5):
-            return "Potencia"
+            return str(self.valorA) + " ^ " + str(self.valorB)
+
+
