@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>905</width>
-    <height>587</height>
+    <width>1124</width>
+    <height>639</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="Nuevo_Boton">
    <property name="geometry">
     <rect>
-     <x>720</x>
-     <y>540</y>
+     <x>880</x>
+     <y>10</y>
      <width>161</width>
      <height>31</height>
     </rect>
@@ -34,8 +34,8 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>543</y>
+     <x>420</x>
+     <y>13</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -52,49 +52,79 @@
   <widget class="QTextBrowser" name="Tiempo_TB">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>540</y>
+     <x>490</x>
+     <y>10</y>
      <width>171</width>
      <height>31</height>
     </rect>
    </property>
   </widget>
-  <widget class="QTableWidget" name="Simulacion_TW">
+  <widget class="QTableWidget" name="Listos_TW">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>661</width>
-     <height>231</height>
+     <y>80</y>
+     <width>691</width>
+     <height>171</height>
     </rect>
    </property>
+   <property name="rowCount">
+    <number>0</number>
+   </property>
+   <property name="columnCount">
+    <number>0</number>
+   </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>175</number>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
   </widget>
-  <widget class="QTableWidget" name="Lotes_TW">
+  <widget class="QTableWidget" name="Terminados_TW">
    <property name="geometry">
     <rect>
-     <x>680</x>
-     <y>50</y>
-     <width>221</width>
-     <height>481</height>
+     <x>710</x>
+     <y>80</y>
+     <width>401</width>
+     <height>541</height>
     </rect>
    </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
   </widget>
-  <widget class="QTableWidget" name="Resultados_TW">
+  <widget class="QTableWidget" name="Bloqueados_TW">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
-     <width>661</width>
-     <height>281</height>
+     <y>430</y>
+     <width>691</width>
+     <height>191</height>
     </rect>
    </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>160</number>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>680</x>
+     <x>10</x>
      <y>10</y>
-     <width>121</width>
+     <width>151</width>
      <height>31</height>
     </rect>
    </property>
@@ -104,17 +134,123 @@
     </font>
    </property>
    <property name="text">
-    <string>Lotes Restantes:</string>
+    <string>Procesos en Nuevos:</string>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="Lotes_Restantes_TB">
+  <widget class="QTextBrowser" name="Nuevos_TB">
    <property name="geometry">
     <rect>
-     <x>810</x>
+     <x>160</x>
      <y>10</y>
-     <width>81</width>
+     <width>191</width>
      <height>31</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>50</y>
+     <width>401</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Procesos Terminados</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>50</y>
+     <width>691</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Procesos en Listos</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>250</y>
+     <width>691</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Proceso en Ejecucion</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="Ejecucion_TW">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>280</y>
+     <width>691</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="columnCount">
+    <number>0</number>
+   </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>120</number>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QLabel" name="label_6">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>400</y>
+     <width>691</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Proceso en Bloqueados</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
   </widget>
  </widget>

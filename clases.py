@@ -57,7 +57,7 @@ class Proceso():
                 potencia *= self.valorA
             self.resultado = str(potencia)
         
-        self.T_Retorno = self.T_Finalizacion - self.T_Llegada
+        self.T_Retorno = round(self.T_Finalizacion - self.T_Llegada, 2)
         self.T_Servicio = self.tiempoTranscurrido
 
     def Return_operacion(self):

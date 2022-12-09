@@ -2,6 +2,7 @@ from PySide2.QtWidgets import QTextEdit
 from Simulacion_ui import Ui_Form
 from PySide2.QtWidgets import QMessageBox, QWidget, QTableWidgetItem, QApplication
 from clases import Proceso
+from Tiempos import Tiempos
 import time
 from pynput import keyboard as kb
 
@@ -14,6 +15,7 @@ class Simulacion(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.procesos_iniciales = _procesos
+        self.total_procesos = len(_procesos)
 
 
         self.nuevo:Proceso = _procesos
@@ -32,7 +34,7 @@ class Simulacion(QWidget):
         pass
     
     def inicializar(self):
-        self.imprimir_terminados([])
+        self.imprimir_terminados()
 
         self.cont_tiempo = 0
         self.nuevo = self.procesos_iniciales
@@ -48,7 +50,6 @@ class Simulacion(QWidget):
     def sim(self):
         self.inicializar()
 
-        terminados = []
         global pause
         global accion
         cont_sistema = 0
@@ -61,7 +62,7 @@ class Simulacion(QWidget):
                 cont_sistema += 1
                 self.nuevo.pop(0)
         
-        while(len(self.procesos_iniciales) != len(self.terminado)):
+        while(self.total_procesos != len(self.terminado)):
 
             #Carga proceso de Nuevo a Listo
             if(cont_sistema < 3 and len(self.nuevo) > 0):
@@ -78,44 +79,89 @@ class Simulacion(QWidget):
                 if(self.ejecucion.T_Respuesta == None):
                     self.ejecucion.T_Respuesta = self.cont_tiempo
 
+            self.ui.Nuevos_TB.setText(str(len(self.nuevo)))
+            QApplication.processEvents()
+
             #-------------------------------   Ejecucion del proceso   ----------------------------------------
-            while(self.ejecucion.tiempo < self.cont_tiempo and accion == None):
-                self.cont_tiempo = round(self.cont_tiempo + .1, 2)
-                self.ejecucion.tiempoTranscurrido = round(self.ejecucion.tiempoTranscurrido + .1, 2)
-                self.ejecucion.tiempoRestante = round(self.ejecucion.tiempoRestante - .1, 2)
+            if(len(self.bloqueado) != 3):
+                while(self.ejecucion.tiempo > self.ejecucion.tiempoTranscurrido and accion == None):
+                    self.cont_tiempo = round(self.cont_tiempo + .1, 2)
+                    self.ejecucion.tiempoTranscurrido = round(self.ejecucion.tiempoTranscurrido + .1, 2)
+                    self.ejecucion.tiempoRestante = round(self.ejecucion.tiempoRestante - .1, 2)
+                    time.sleep(.1)
 
-                #Aumento de tiempo de espera en procesos listos
-                for listo in self.listo:
-                    listo.T_Espera = round(bloq.T_Bloqueado + .1, 2)
 
-                #Aumento de tiempo de espera en procesos bloqueados
-                for bloq in self.bloqueado:
-                    bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
-                    bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
+                    #Aumento de tiempo de espera en procesos bloqueados
+                    for bloq in self.bloqueado:
+                        bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
+                        bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
 
-                    #Mueve proceso de Bloqueado a Listo
-                    if(bloq.T_Bloqueado == 7):
-                        self.listo.append(bloq)
-                        self.bloqueado.remove(bloq)
+                        #Mueve proceso de Bloqueado a Listo
+                        if(bloq.T_Bloqueado == 7):
+                            self.listo.append(bloq)
+
+                    #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
+                    for listo in self.listo:
+                        if(listo in self.bloqueado):
+                            self.bloqueado.remove(listo)
+                        
+                        else:
+                            listo.T_Espera = round(listo.T_Espera + .1, 2)
+
+                    self.imprimir_listos()
+                    self.imprimir_Ejecucion()
+                    self.imprimir_bloqueados()
+                    self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
+                    QApplication.processEvents()
+            else:
+                while(len(self.bloqueado) == 3):
+                    time.sleep(.1)
+
+
+                    #Aumento de tiempo de espera en procesos bloqueados
+                    for bloq in self.bloqueado:
+                        bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
+                        bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
+
+                        #Mueve proceso de Bloqueado a Listo
+                        if(bloq.T_Bloqueado == 7):
+                            self.listo.append(bloq)
+
+                    #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
+                    for listo in self.listo:
+                        if(listo in self.bloqueado):
+                            self.bloqueado.remove(listo)
+                        
+                        else:
+                            listo.T_Espera = round(listo.T_Espera + .1, 2)
+
+                    self.imprimir_listos()
+                    self.imprimir_Ejecucion()
+                    self.imprimir_bloqueados()
+                    self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
+                    QApplication.processEvents()
 
                 
 
             
             #Termina proceso normalmente
-            if(self.ejecucion.tiempoRestante == 0):
-                self.ejecucion.resultado.calcular_resultado()
+            if(self.ejecucion == None):
+                pass
+            elif(self.ejecucion.tiempoRestante == 0):
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
+                self.ejecucion.calcular_resultado(False)
                 self.terminado.append(self.ejecucion)
                 self.ejecucion = None
                 cont_sistema -= 1
                 
             #Termina proceso por Error
             elif(accion == 1):
-                self.ejecucion.resultado = "Error"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
+                self.ejecucion.calcular_resultado(True)
                 self.terminado.append(self.ejecucion)
                 self.ejecucion = None
                 cont_sistema -= 1
+                accion = None
 
             
             #Mueve proceso de Ejecucion a Bloqueado
@@ -123,159 +169,119 @@ class Simulacion(QWidget):
                 self.ejecucion.T_Bloqueado = 0
                 self.bloqueado.append(self.ejecucion)
                 self.ejecucion = None
-
-
-
-
-#------------------------------- VIEJO PROGRAMA --------------------------------------------
-        pass
-        f = 0
-        while(f < self.contlotes + 1):   #----- Lotes -----
-            
-            self.estado_lotes[f - 1] = "En Ejecucion"
-
-            lotes_restantes = 0
-            for pen in self.estado_lotes:
-                if(pen == "Pendiente"):
-                    lotes_restantes += 1
-            
-            n = 0
-            while(n < len(self.lotes[f])):  #----- Procesos por lote -----
-                x:Proceso = self.lotes[f][n]
-
-
-                self.imprimir_lotes()
-                
-                
-                self.ui.Tiempo_TB.setText(str(round(self.cont_tiempo, 2)) + " s")
-
-                y = x.tiempoTranscurrido * 10
-                while(y < int(x.tiempo * 10) and accion != 0 and self.estado_procesos[cont_proceso] == "Pendiente"):  #----- Tiempo de Proceso -----
-                    
-                    if(accion == 1):
-                        x.error = True
-                        self.estado_procesos[x.id] = "Terminado"
-                        accion = None
-                        terminados.append(x)
-                        y = int(x.tiempo * 10)
-
-                    elif(accion == 5):
-                        QMessageBox.warning(self, "Error", "Pulsa C para continuar")
-                        accion = None
-
-                    elif(not pause):
-                        time.sleep(.1)
-                        self.cont_tiempo += .1
-                        x.tiempoTranscurrido = round(x.tiempoTranscurrido + .1, 2)
-                        x.tiempoRestante = round(x.tiempoRestante - .1, 2)
-                        self.ui.Tiempo_TB.setText(str(round(self.cont_tiempo, 2)) + " s")
-                        self.ui.Lotes_Restantes_TB.setText(str(lotes_restantes))
-                        y += 1
-
-                        self.imprimir_ProcesoEjec(self.lotes[f]);
-                        QApplication.processEvents()
-
-                    
-                
-                if(x.tiempo == x.tiempoTranscurrido and self.estado_procesos[x.id] != "Terminado"):
-                    self.estado_procesos[x.id] = "Terminado"
-                    terminados.append(x)
-
-                elif(accion == 0):
-                    accion = None
-                
-
-                
-                
-                self.imprimir_terminados(terminados)
-                self.imprimir_lotes()
-                QApplication.processEvents()
-                n += 1
                 accion = None
-                cont_proceso += 1
-                if(n == len(self.lotes[f]) and "Pendiente" in self.estado_procesos[3 * (f-1) : 3 * (f-1) + 3]):
-                    cont_proceso -= n
-                    n = 0
-                    
-
-
-            if(not "Pendiente" in self.estado_procesos[3 * (f-1) : 3 * (f-1) + 3]):
-                    self.estado_lotes[f - 1] = "Terminado"
-            else:
-                self.estado_lotes[f-1] = "Pendiente"
-
-            self.imprimir_terminados(terminados)
-            self.imprimir_lotes()
+            
+            self.imprimir_listos()
+            self.imprimir_Ejecucion()
+            self.imprimir_bloqueados()
+            self.imprimir_terminados()
+            self.ui.Nuevos_TB.setText(str(len(self.nuevo)))
             QApplication.processEvents()
-            f += 1
-            if(f == self.contlotes + 1 and "Pendiente" in self.estado_procesos):
-                f = 1
-                cont_proceso = 0
         
+        self.Mostrar_Tiempos()
+
         
-        pass
-
-    def imprimir_lotes(self):
-        headers = ["Lote", "Estado"]
-
-        self.ui.Lotes_TW.setColumnCount(2)
-        self.ui.Lotes_TW.setRowCount(int(self.contlotes))
-        self.ui.Lotes_TW.setHorizontalHeaderLabels(headers)
 
 
-        for f in range(0, self.contlotes):
-            lote = QTableWidgetItem("Lote " + str(f + 1))
-            estado = QTableWidgetItem(self.estado_lotes[f])
+    def imprimir_listos(self):
+        headers = ["ID", "Tiempo Estimado", "Tiempo Ejecutado", "Tiempo en Espera"]
+
+        self.ui.Listos_TW.setColumnCount(4)
+        self.ui.Listos_TW.setRowCount(len(self.listo))
+        self.ui.Listos_TW.setHorizontalHeaderLabels(headers)
+
+        cont = 0
+        for f in self.listo:
+            id = QTableWidgetItem(str(f.id))
+            tiempo = QTableWidgetItem(str(f.tiempo))
+            tiempoT = QTableWidgetItem(str(f.tiempoTranscurrido))
+            tiempoE = QTableWidgetItem(str(f.T_Espera))
       
 
-            self.ui.Lotes_TW.setItem(f, 0, lote)
-            self.ui.Lotes_TW.setItem(f, 1, estado)
+            self.ui.Listos_TW.setItem(cont, 0, id)
+            self.ui.Listos_TW.setItem(cont, 1, tiempo)
+            self.ui.Listos_TW.setItem(cont, 2, tiempoT)
+            self.ui.Listos_TW.setItem(cont, 3, tiempoE)
+            cont += 1
 
-            pass
-        
 
-        return
 
-    def imprimir_ProcesoEjec(self, lote):
+    def imprimir_Ejecucion(self):
         headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido", "Tiempo Restante"]
 
-        self.ui.Simulacion_TW.setColumnCount(5)
-        self.ui.Simulacion_TW.setRowCount(len(lote))
-        self.ui.Simulacion_TW.setHorizontalHeaderLabels(headers)
+        self.ui.Ejecucion_TW.setColumnCount(5)
+        self.ui.Ejecucion_TW.setRowCount(1)
+        self.ui.Ejecucion_TW.setHorizontalHeaderLabels(headers)
 
-        for i in range(0, len(lote)):
-            id = QTableWidgetItem(str(lote[i].id))
-            operacion = QTableWidgetItem(str(lote[i].Return_operacion()))
-            Tiempo_Esperado = QTableWidgetItem(str(lote[i].tiempo))
-            Tiempo_Transcurrido = QTableWidgetItem(str(lote[i].tiempoTranscurrido))
-            Tiempo_Restante = QTableWidgetItem(str(lote[i].tiempoRestante))
+        if(self.ejecucion == None):
+            id = QTableWidgetItem("")
+            operacion = QTableWidgetItem("")
+            Tiempo_Esperado = QTableWidgetItem("")
+            Tiempo_Transcurrido = QTableWidgetItem("")
+            Tiempo_Restante = QTableWidgetItem("")
+        else:
+            id = QTableWidgetItem(str(self.ejecucion.id))
+            operacion = QTableWidgetItem(str(self.ejecucion.Return_operacion()))
+            Tiempo_Esperado = QTableWidgetItem(str(self.ejecucion.tiempo))
+            Tiempo_Transcurrido = QTableWidgetItem(str(self.ejecucion.tiempoTranscurrido))
+            Tiempo_Restante = QTableWidgetItem(str(self.ejecucion.tiempoRestante))
 
-            self.ui.Simulacion_TW.setItem(i, 0, id)
-            self.ui.Simulacion_TW.setItem(i, 1, operacion)
-            self.ui.Simulacion_TW.setItem(i, 2, Tiempo_Esperado)
-            self.ui.Simulacion_TW.setItem(i, 3, Tiempo_Transcurrido)
-            self.ui.Simulacion_TW.setItem(i, 4, Tiempo_Restante)
+        self.ui.Ejecucion_TW.setItem(0, 0, id)
+        self.ui.Ejecucion_TW.setItem(0, 1, operacion)
+        self.ui.Ejecucion_TW.setItem(0, 2, Tiempo_Esperado)
+        self.ui.Ejecucion_TW.setItem(0, 3, Tiempo_Transcurrido)
+        self.ui.Ejecucion_TW.setItem(0, 4, Tiempo_Restante)
 
         pass
 
-    def imprimir_terminados(self, terminados):
+    def imprimir_bloqueados(self):
+        headers = ["ID", "Tiempo en Bloqueados"]
+
+        self.ui.Bloqueados_TW.setColumnCount(2)
+        self.ui.Bloqueados_TW.setRowCount(len(self.bloqueado))
+        self.ui.Bloqueados_TW.setHorizontalHeaderLabels(headers)
+
+        cont = 0
+        for f in self.bloqueado:
+            id = QTableWidgetItem(str(f.id))
+            tiempo = QTableWidgetItem(str(f.T_Bloqueado))
+      
+
+            self.ui.Bloqueados_TW.setItem(cont, 0, id)
+            self.ui.Bloqueados_TW.setItem(cont, 1, tiempo)
+            cont += 1
+
+
+    def imprimir_terminados(self):
         headers = ["ID",  "Operacion", "Resultado"]
 
-        self.ui.Resultados_TW.setColumnCount(3)
-        self.ui.Resultados_TW.setRowCount(len(terminados))
-        self.ui.Resultados_TW.setHorizontalHeaderLabels(headers)
+        self.ui.Terminados_TW.setColumnCount(3)
+        self.ui.Terminados_TW.setRowCount(len(self.terminado))
+        self.ui.Terminados_TW.setHorizontalHeaderLabels(headers)
 
-        for i in range(0, len(terminados)):
-            id = QTableWidgetItem(str(terminados[i].id))
-            operacion = QTableWidgetItem(str(terminados[i].Return_operacion()))
-            resultado = QTableWidgetItem(str(terminados[i].calcular_resultado()))
-            if(terminados[i].error):
-                resultado = QTableWidgetItem("Error")
+        cont = 0
+        for i in self.terminado:
+            id = QTableWidgetItem(str(i.id))
+            operacion = QTableWidgetItem(str(i.Return_operacion()))
+            resultado = QTableWidgetItem(str(i.resultado))
 
-            self.ui.Resultados_TW.setItem(i, 0, id)
-            self.ui.Resultados_TW.setItem(i, 1, operacion)
-            self.ui.Resultados_TW.setItem(i, 2, resultado)
+            self.ui.Terminados_TW.setItem(cont, 0, id)
+            self.ui.Terminados_TW.setItem(cont, 1, operacion)
+            self.ui.Terminados_TW.setItem(cont, 2, resultado)
+            cont += 1
         pass
+
+    def Mostrar_Tiempos(self):
+        procesos = []
+        procesos.extend(self.terminado)
+        if(self.ejecucion != None):
+            procesos.append(self.ejecucion)
+        procesos.extend(self.bloqueado)
+        procesos.extend(self.listo)
+
+        self.ventana_tiempos = Tiempos(procesos)
+        self.ventana_tiempos.show()
+        
 
 def listener(tecla):
     global accion
