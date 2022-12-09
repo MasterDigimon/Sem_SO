@@ -58,6 +58,7 @@ class Simulacion(QWidget):
         for i in range(0, 3):
             if(cont_sistema < 3  and len(self.nuevo) > 0):
                 self.nuevo[0].T_Llegada = self.cont_tiempo
+                self.nuevo[0].estado = "Listo"
                 self.listo.append(self.nuevo[0])
                 cont_sistema += 1
                 self.nuevo.pop(0)
@@ -67,6 +68,7 @@ class Simulacion(QWidget):
             #Carga proceso de Nuevo a Listo
             if(cont_sistema < 3 and len(self.nuevo) > 0):
                 self.nuevo[0].T_Llegada = self.cont_tiempo
+                self.nuevo[0].estado = "Listo"
                 self.listo.append(self.nuevo[0])
                 cont_sistema += 1
                 self.nuevo.pop(0)
@@ -74,6 +76,7 @@ class Simulacion(QWidget):
             #Mueve un proceso de Listo a Terminado
             if(self.ejecucion == None and len(self.listo) > 0):
                 self.ejecucion = self.listo[0]
+                self.ejecucion.estado = "Ejecucion"
                 self.listo.pop(0)
 
                 if(self.ejecucion.T_Respuesta == None):
@@ -83,10 +86,10 @@ class Simulacion(QWidget):
             QApplication.processEvents()
 
             #-------------------------------   Ejecucion del proceso   ----------------------------------------
-            if(len(self.bloqueado) != 3):
-                while(self.ejecucion.tiempo > self.ejecucion.tiempoTranscurrido and accion == None):
+            if(self.ejecucion != None):
+                while(self.ejecucion.tiempo > self.ejecucion.T_Servicio and accion == None):
                     self.cont_tiempo = round(self.cont_tiempo + .1, 2)
-                    self.ejecucion.tiempoTranscurrido = round(self.ejecucion.tiempoTranscurrido + .1, 2)
+                    self.ejecucion.T_Servicio = round(self.ejecucion.T_Servicio + .1, 2)
                     self.ejecucion.tiempoRestante = round(self.ejecucion.tiempoRestante - .1, 2)
                     time.sleep(.1)
 
@@ -98,6 +101,7 @@ class Simulacion(QWidget):
 
                         #Mueve proceso de Bloqueado a Listo
                         if(bloq.T_Bloqueado == 7):
+                            bloq.estado = "Listo"
                             self.listo.append(bloq)
 
                     #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
@@ -114,7 +118,8 @@ class Simulacion(QWidget):
                     self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
                     QApplication.processEvents()
             else:
-                while(len(self.bloqueado) == 3):
+                while(len(self.bloqueado) > 0 and self.ejecucion == None):
+                    self.cont_tiempo = round(self.cont_tiempo + .1, 2)
                     time.sleep(.1)
 
 
@@ -125,6 +130,7 @@ class Simulacion(QWidget):
 
                         #Mueve proceso de Bloqueado a Listo
                         if(bloq.T_Bloqueado == 7):
+                            bloq.estado = "Listo"
                             self.listo.append(bloq)
 
                     #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
@@ -148,6 +154,7 @@ class Simulacion(QWidget):
             if(self.ejecucion == None):
                 pass
             elif(self.ejecucion.tiempoRestante == 0):
+                self.ejecucion.estado = "Terminado"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
                 self.ejecucion.calcular_resultado(False)
                 self.terminado.append(self.ejecucion)
@@ -156,6 +163,7 @@ class Simulacion(QWidget):
                 
             #Termina proceso por Error
             elif(accion == 1):
+                self.ejecucion.estado = "Terminado"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
                 self.ejecucion.calcular_resultado(True)
                 self.terminado.append(self.ejecucion)
@@ -166,10 +174,22 @@ class Simulacion(QWidget):
             
             #Mueve proceso de Ejecucion a Bloqueado
             elif(accion == 0):
+                self.ejecucion.estado = "Bloqueado"
                 self.ejecucion.T_Bloqueado = 0
                 self.bloqueado.append(self.ejecucion)
                 self.ejecucion = None
                 accion = None
+
+            #Genera Nuevo proceso
+            elif(accion == 3):
+                self.nuevo.append(Proceso(self.total_procesos))
+                self.total_procesos += 1
+                accion = None
+
+            #Mostrar Tabla de Procesos
+            elif(accion == 4):
+                self.Mostrar_Tiempos()
+                accion = 2
             
             self.imprimir_listos()
             self.imprimir_Ejecucion()
@@ -194,7 +214,7 @@ class Simulacion(QWidget):
         for f in self.listo:
             id = QTableWidgetItem(str(f.id))
             tiempo = QTableWidgetItem(str(f.tiempo))
-            tiempoT = QTableWidgetItem(str(f.tiempoTranscurrido))
+            tiempoT = QTableWidgetItem(str(f.T_Servicio))
             tiempoE = QTableWidgetItem(str(f.T_Espera))
       
 
@@ -223,7 +243,7 @@ class Simulacion(QWidget):
             id = QTableWidgetItem(str(self.ejecucion.id))
             operacion = QTableWidgetItem(str(self.ejecucion.Return_operacion()))
             Tiempo_Esperado = QTableWidgetItem(str(self.ejecucion.tiempo))
-            Tiempo_Transcurrido = QTableWidgetItem(str(self.ejecucion.tiempoTranscurrido))
+            Tiempo_Transcurrido = QTableWidgetItem(str(self.ejecucion.T_Servicio))
             Tiempo_Restante = QTableWidgetItem(str(self.ejecucion.tiempoRestante))
 
         self.ui.Ejecucion_TW.setItem(0, 0, id)
@@ -278,6 +298,7 @@ class Simulacion(QWidget):
             procesos.append(self.ejecucion)
         procesos.extend(self.bloqueado)
         procesos.extend(self.listo)
+        procesos.extend(self.nuevo)
 
         self.ventana_tiempos = Tiempos(procesos)
         self.ventana_tiempos.show()
@@ -298,3 +319,7 @@ def listener(tecla):
             accion = 1
         elif (tecla == kb.KeyCode.from_char('p')):
             accion = 2
+        elif(tecla == kb.KeyCode.from_char('n')):
+            accion = 3
+        elif(tecla == kb.KeyCode.from_char('b')):
+            accion = 4

@@ -15,7 +15,7 @@ class Tiempos(QWidget):
         
 
     def Imprimir_procesos(self):
-        headers = ["ID", "Operacion", "Resultado", "Tiempo de Llegada", "Tiempo de Finalizacion", "Tiempo de Retorno", "Tiempo de Respuesta", "Tiempo de Espera", "Tiempo de Servicio"]
+        headers = ["ID", "Operacion", "Resultado", "Estado", "Tiempo de Llegada", "Tiempo de Finalizacion", "Tiempo de Retorno", "Tiempo de Respuesta", "Tiempo de Espera", "Tiempo de Servicio"]
 
         self.ui.Tiempo_TW.setColumnCount(len(headers))
         self.ui.Tiempo_TW.setRowCount(len(self.procesos))
@@ -27,6 +27,7 @@ class Tiempos(QWidget):
             id = QTableWidgetItem(str(x.id))
             operacion = QTableWidgetItem(x.Return_operacion())
             resultado = QTableWidgetItem(str(x.resultado))
+            estado = QTableWidgetItem(x.estado)
 
             T_Llegada = QTableWidgetItem(str(x.T_Llegada))
             T_Finalizacion = QTableWidgetItem(str(x.T_Finalizacion))
@@ -39,11 +40,12 @@ class Tiempos(QWidget):
             self.ui.Tiempo_TW.setItem(i, 0, id)
             self.ui.Tiempo_TW.setItem(i, 1, operacion)
             self.ui.Tiempo_TW.setItem(i, 2, resultado)
-            self.ui.Tiempo_TW.setItem(i, 3, T_Llegada)
-            self.ui.Tiempo_TW.setItem(i, 4, T_Finalizacion)
-            self.ui.Tiempo_TW.setItem(i, 5, T_Retorno)
-            self.ui.Tiempo_TW.setItem(i, 6, T_Respuesta)
-            self.ui.Tiempo_TW.setItem(i, 7, T_Espera)
-            self.ui.Tiempo_TW.setItem(i, 8, T_Servicio)
+            self.ui.Tiempo_TW.setItem(i, 3, estado)
+            self.ui.Tiempo_TW.setItem(i, 4, T_Llegada)
+            self.ui.Tiempo_TW.setItem(i, 5, T_Finalizacion)
+            self.ui.Tiempo_TW.setItem(i, 6, T_Retorno)
+            self.ui.Tiempo_TW.setItem(i, 7, T_Respuesta)
+            self.ui.Tiempo_TW.setItem(i, 8, T_Espera)
+            self.ui.Tiempo_TW.setItem(i, 9, T_Servicio)
             i += 1
 

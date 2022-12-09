@@ -1,31 +1,33 @@
-
+import random
 
 class Proceso():
-    def __init__(self,_id, _A, _B, _operacion, _tiempo):
+    def __init__(self, _id) -> None:
         self.id = _id
-        self.valorA = _A
-        self.valorB = _B
-        self.operacion = _operacion
-        self.tiempo = _tiempo
-        self.tiempoRestante = _tiempo
-        self.tiempoTranscurrido = 0
+        self.valorA = None
+        self.valorB = None
+        self.operacion = None
+        self.tiempo = random.randint(6, 16)
+        self.tiempoRestante = self.tiempo
         self.resultado = None
+        self.estado = "Nuevo"
 
 
         self.T_Bloqueado = 0
 
-        self.T_Llegada = 0
+        self.T_Llegada = None
         self.T_Retorno = None
         self.T_Respuesta = None
         self.T_Espera = 0
-        self.T_Servicio = None
+        self.T_Servicio = 0
         self.T_Finalizacion = None
-        
+
+        self.genOperacion()
+
         return
 
     def iniciar_sim(self):
         self.tiempoRestante = self.tiempo
-        self.tiempoTranscurrido = 0
+        self.T_Servicio = 0
 
         self.T_Bloqueado = 0
 
@@ -58,7 +60,6 @@ class Proceso():
             self.resultado = str(potencia)
         
         self.T_Retorno = round(self.T_Finalizacion - self.T_Llegada, 2)
-        self.T_Servicio = self.tiempoTranscurrido
 
     def Return_operacion(self):
         if(self.operacion == 0):
@@ -79,3 +80,30 @@ class Proceso():
             return str(self.valorA) + " ^ " + str(self.valorB)
 
 
+    def genOperacion(self):
+        self.operacion = random.randint(0, 5)
+        #Suma - 0, Resta - 1, Multiplicacion - 2, Division - 3, Modulo - 4, Potencia - 5
+
+        if(self.operacion == 0):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(0, 100)
+
+        elif(self.operacion == 1):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(0, 100)
+
+        elif(self.operacion == 2):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(0, 100)
+
+        elif(self.operacion == 3):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(1, self.operacion)
+
+        elif(self.operacion == 4):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(1, self.operacion)
+
+        elif(self.operacion == 5):
+            self.valorA = random.randint(0, 100)
+            self.valorB = random.randint(0, 5)

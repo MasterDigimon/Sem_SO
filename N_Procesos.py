@@ -32,34 +32,7 @@ class MainWindow(QMainWindow):
     def asignar_valores(self):
         
         for i in range(0, self.ui.Procesos_SB.value()):
-            self.genOperacion()
-            proceso = Proceso(i, self.operacion[1], self.operacion[2], self.operacion[0], random.randint(6, 16))
+            proceso = Proceso(i)
             self.procesos.append(proceso)
 
-    def genOperacion(self):
-        self.operacion[0] = random.randint(0, 5)
-        #Suma - 0, Resta - 1, Multiplicacion - 2, Division - 3, Modulo - 4, Potencia - 5
-
-        if(self.operacion[0] == 0):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(0, 100)
-
-        elif(self.operacion[0] == 1):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(0, 100)
-
-        elif(self.operacion[0] == 2):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(0, 100)
-
-        elif(self.operacion[0] == 3):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(1, self.operacion[1])
-
-        elif(self.operacion[0] == 4):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(0, self.operacion[1])
-
-        elif(self.operacion[0] == 5):
-            self.operacion[1] = random.randint(0, 100)
-            self.operacion[2] = random.randint(0, 5)
+    

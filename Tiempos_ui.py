@@ -17,12 +17,13 @@ class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(1418, 509)
+        Form.resize(1547, 509)
         self.Tiempo_TW = QTableWidget(Form)
         self.Tiempo_TW.setObjectName(u"Tiempo_TW")
-        self.Tiempo_TW.setGeometry(QRect(10, 10, 1401, 491))
+        self.Tiempo_TW.setGeometry(QRect(10, 10, 1531, 491))
+        self.Tiempo_TW.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.Tiempo_TW.horizontalHeader().setCascadingSectionResizes(True)
-        self.Tiempo_TW.horizontalHeader().setDefaultSectionSize(150)
+        self.Tiempo_TW.horizontalHeader().setDefaultSectionSize(140)
         self.Tiempo_TW.verticalHeader().setVisible(False)
 
         self.retranslateUi(Form)
