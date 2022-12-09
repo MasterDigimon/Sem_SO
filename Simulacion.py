@@ -6,31 +6,23 @@ import time
 from pynput import keyboard as kb
 
 
-pause  = False
 accion = None
 
 class Simulacion(QWidget):
-    def __init__(self, _ids, _operaciones):
+    def __init__(self, _procesos):
         super(Simulacion, self).__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.procesos_iniciales = _procesos
 
-        
-        self.contlotes = 0
-        self.ejecucion = True
-        self.ids = _ids
 
-        self.estado_lotes = []
-        self.estado_procesos = []
-        self.lotes = {}
-        for x in range(0, len(self.ids)):
-            self.estado_procesos.append("Pendiente")
-            if(x % 3 == 0):
-                self.contlotes += 1
-                self.estado_lotes.append("Pendiente")
-                
-                self.lotes[self.contlotes] = []
-            self.lotes[self.contlotes].append(_operaciones[_ids[x]])
+        self.nuevo:Proceso = _procesos
+        self.listo:Proceso = []
+        self.bloqueado:Proceso = []
+        self.terminado:Proceso = []
+        self.ejecucion:Proceso = None
+
+        self.cont_tiempo = 0
         
 
         self.ui.Nuevo_Boton.clicked.connect(self.sim)
@@ -40,34 +32,104 @@ class Simulacion(QWidget):
         pass
     
     def inicializar(self):
-        for i in range(0, len(self.estado_procesos)):
-            self.estado_procesos[i] = "Pendiente"
-        
-        for i in range(0, len(self.estado_lotes)):
-            self.estado_lotes[i] = "Pendiente"
-        
-        for i in range(1, self.contlotes + 1):
-            for x in self.lotes[i]:
-                x.iniciar_sim()
-
         self.imprimir_terminados([])
+
+        self.cont_tiempo = 0
+        self.nuevo = self.procesos_iniciales
+        self.listo = []
+        self.bloqueado = []
+        self.terminado = []
+        self.ejecucion = None
+
         global accion
         accion = None
         pass
 
     def sim(self):
         self.inicializar()
-        for i in self.estado_lotes:
-            i = "Pendiente"
-        
-        cont_tiempo = 0
-        lotes_restantes = self.contlotes
+
         terminados = []
         global pause
         global accion
+        cont_sistema = 0
 
-        cont_proceso = 0
-        f = 1
+        #Carga 3 procesos de Nuevo a Listo si hay suficientes procesos
+        for i in range(0, 3):
+            if(cont_sistema < 3  and len(self.nuevo) > 0):
+                self.nuevo[0].T_Llegada = self.cont_tiempo
+                self.listo.append(self.nuevo[0])
+                cont_sistema += 1
+                self.nuevo.pop(0)
+        
+        while(len(self.procesos_iniciales) != len(self.terminado)):
+
+            #Carga proceso de Nuevo a Listo
+            if(cont_sistema < 3 and len(self.nuevo) > 0):
+                self.nuevo[0].T_Llegada = self.cont_tiempo
+                self.listo.append(self.nuevo[0])
+                cont_sistema += 1
+                self.nuevo.pop(0)
+                
+            #Mueve un proceso de Listo a Terminado
+            if(self.ejecucion == None and len(self.listo) > 0):
+                self.ejecucion = self.listo[0]
+                self.listo.pop(0)
+
+                if(self.ejecucion.T_Respuesta == None):
+                    self.ejecucion.T_Respuesta = self.cont_tiempo
+
+            #-------------------------------   Ejecucion del proceso   ----------------------------------------
+            while(self.ejecucion.tiempo < self.cont_tiempo and accion == None):
+                self.cont_tiempo = round(self.cont_tiempo + .1, 2)
+                self.ejecucion.tiempoTranscurrido = round(self.ejecucion.tiempoTranscurrido + .1, 2)
+                self.ejecucion.tiempoRestante = round(self.ejecucion.tiempoRestante - .1, 2)
+
+                #Aumento de tiempo de espera en procesos listos
+                for listo in self.listo:
+                    listo.T_Espera = round(bloq.T_Bloqueado + .1, 2)
+
+                #Aumento de tiempo de espera en procesos bloqueados
+                for bloq in self.bloqueado:
+                    bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
+                    bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
+
+                    #Mueve proceso de Bloqueado a Listo
+                    if(bloq.T_Bloqueado == 7):
+                        self.listo.append(bloq)
+                        self.bloqueado.remove(bloq)
+
+                
+
+            
+            #Termina proceso normalmente
+            if(self.ejecucion.tiempoRestante == 0):
+                self.ejecucion.resultado.calcular_resultado()
+                self.ejecucion.T_Finalizacion = self.cont_tiempo
+                self.terminado.append(self.ejecucion)
+                self.ejecucion = None
+                cont_sistema -= 1
+                
+            #Termina proceso por Error
+            elif(accion == 1):
+                self.ejecucion.resultado = "Error"
+                self.ejecucion.T_Finalizacion = self.cont_tiempo
+                self.terminado.append(self.ejecucion)
+                self.ejecucion = None
+                cont_sistema -= 1
+
+            
+            #Mueve proceso de Ejecucion a Bloqueado
+            elif(accion == 0):
+                self.ejecucion.T_Bloqueado = 0
+                self.bloqueado.append(self.ejecucion)
+                self.ejecucion = None
+
+
+
+
+#------------------------------- VIEJO PROGRAMA --------------------------------------------
+        pass
+        f = 0
         while(f < self.contlotes + 1):   #----- Lotes -----
             
             self.estado_lotes[f - 1] = "En Ejecucion"
@@ -85,7 +147,7 @@ class Simulacion(QWidget):
                 self.imprimir_lotes()
                 
                 
-                self.ui.Tiempo_TB.setText(str(round(cont_tiempo, 2)) + " s")
+                self.ui.Tiempo_TB.setText(str(round(self.cont_tiempo, 2)) + " s")
 
                 y = x.tiempoTranscurrido * 10
                 while(y < int(x.tiempo * 10) and accion != 0 and self.estado_procesos[cont_proceso] == "Pendiente"):  #----- Tiempo de Proceso -----
@@ -102,14 +164,11 @@ class Simulacion(QWidget):
                         accion = None
 
                     elif(not pause):
-                        
-
-
                         time.sleep(.1)
-                        cont_tiempo += .1
+                        self.cont_tiempo += .1
                         x.tiempoTranscurrido = round(x.tiempoTranscurrido + .1, 2)
                         x.tiempoRestante = round(x.tiempoRestante - .1, 2)
-                        self.ui.Tiempo_TB.setText(str(round(cont_tiempo, 2)) + " s")
+                        self.ui.Tiempo_TB.setText(str(round(self.cont_tiempo, 2)) + " s")
                         self.ui.Lotes_Restantes_TB.setText(str(lotes_restantes))
                         y += 1
 
@@ -134,6 +193,11 @@ class Simulacion(QWidget):
                 n += 1
                 accion = None
                 cont_proceso += 1
+                if(n == len(self.lotes[f]) and "Pendiente" in self.estado_procesos[3 * (f-1) : 3 * (f-1) + 3]):
+                    cont_proceso -= n
+                    n = 0
+                    
+
 
             if(not "Pendiente" in self.estado_procesos[3 * (f-1) : 3 * (f-1) + 3]):
                     self.estado_lotes[f - 1] = "Terminado"
@@ -214,11 +278,10 @@ class Simulacion(QWidget):
         pass
 
 def listener(tecla):
-    global pause
     global accion
-    if(pause):
+    if(accion == 2):
         if(tecla == kb.KeyCode.from_char('c')):
-            pause = False
+            accion = None
         else:
             accion = 5
     
@@ -229,4 +292,3 @@ def listener(tecla):
             accion = 1
         elif (tecla == kb.KeyCode.from_char('p')):
             accion = 2
-            pause = True

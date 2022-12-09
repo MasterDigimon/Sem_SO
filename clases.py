@@ -9,36 +9,56 @@ class Proceso():
         self.tiempo = _tiempo
         self.tiempoRestante = _tiempo
         self.tiempoTranscurrido = 0
-        self.error = None
+        self.resultado = None
+
+
+        self.T_Bloqueado = 0
+
+        self.T_Llegada = 0
+        self.T_Retorno = None
+        self.T_Respuesta = None
+        self.T_Espera = 0
+        self.T_Servicio = None
+        self.T_Finalizacion = None
+        
         return
 
     def iniciar_sim(self):
         self.tiempoRestante = self.tiempo
         self.tiempoTranscurrido = 0
 
+        self.T_Bloqueado = 0
 
-    def calcular_resultado(self) -> float:
-        if(self.operacion == 0):
-            return self.valorA + self.valorB
+        self.T_Espera = 0
+
+
+    def calcular_resultado(self, error):
+        if(error):
+            self.resultado = "Error"
+
+        elif(self.operacion == 0):
+            self.resultado =  str(self.valorA + self.valorB)
         
         elif(self.operacion == 1):
-            return self.valorA - self.valorB
+            self.resultado = str(self.valorA - self.valorB)
 
         elif(self.operacion == 2):
-            return self.valorA * self.valorB
+            self.resultado = str(self.valorA * self.valorB)
 
         elif(self.operacion == 3):
-            return round(self.valorA / self.valorB, 2)
+            self.resultado = str(round(self.valorA / self.valorB, 2))
 
         elif(self.operacion == 4):
-            return self.valorA % self.valorB
+            self.resultado = str(self.valorA % self.valorB)
 
         elif(self.operacion == 5):
             potencia = 1
             for i in range(0, int(self.valorB)):
                 potencia *= self.valorA
-            return potencia
-        pass
+            self.resultado = str(potencia)
+        
+        self.T_Retorno = self.T_Finalizacion - self.T_Llegada
+        self.T_Servicio = self.tiempoTranscurrido
 
     def Return_operacion(self):
         if(self.operacion == 0):

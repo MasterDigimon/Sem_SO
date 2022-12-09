@@ -11,7 +11,6 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.procesos = []
-        self.id = []
         self.ui.Capturar_Boton.clicked.connect(self.def_numero)
 
         self.operacion = [None, None, None]
@@ -25,7 +24,7 @@ class MainWindow(QMainWindow):
         else:
             self.asignar_valores()
             self.hide()
-            self.ventana = Simulacion(self.id, self.procesos)
+            self.ventana = Simulacion(self.procesos)
             self.ventana.show()
             pass
         pass
@@ -33,7 +32,6 @@ class MainWindow(QMainWindow):
     def asignar_valores(self):
         
         for i in range(0, self.ui.Procesos_SB.value()):
-            self.id.append(i)
             self.genOperacion()
             proceso = Proceso(i, self.operacion[1], self.operacion[2], self.operacion[0], random.randint(6, 16))
             self.procesos.append(proceso)
