@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>274</width>
-    <height>121</height>
+    <width>280</width>
+    <height>144</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>251</width>
-      <height>71</height>
+      <width>261</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="title">
@@ -29,9 +29,9 @@
     <widget class="QPushButton" name="Capturar_Boton">
      <property name="geometry">
       <rect>
-       <x>150</x>
-       <y>20</y>
-       <width>91</width>
+       <x>60</x>
+       <y>60</y>
+       <width>141</width>
        <height>31</height>
       </rect>
      </property>
@@ -52,7 +52,7 @@
       <rect>
        <x>80</x>
        <y>20</y>
-       <width>51</width>
+       <width>41</width>
        <height>31</height>
       </rect>
      </property>
@@ -83,6 +83,42 @@
       <string>Procesos:</string>
      </property>
     </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>20</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Quantum:</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="Quantum_SB">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>20</y>
+       <width>41</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="maximum">
+      <number>999</number>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -90,7 +126,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>274</width>
+     <width>280</width>
      <height>21</height>
     </rect>
    </property>

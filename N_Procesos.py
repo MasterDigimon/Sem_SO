@@ -21,10 +21,12 @@ class MainWindow(QMainWindow):
     def def_numero(self):
         if(self.ui.Procesos_SB.value() == 0):
             QMessageBox.warning(self, "Error", "No se pueden asignar 0 procesos")
+        elif(self.ui.Quantum_SB.value() == 0):
+            QMessageBox.warning(self, "Error", "No se puede asignar 0 de Quantum")
         else:
             self.asignar_valores()
             self.hide()
-            self.ventana = Simulacion(self.procesos)
+            self.ventana = Simulacion(self.procesos, self.ui.Quantum_SB.value())
             self.ventana.show()
             pass
         pass

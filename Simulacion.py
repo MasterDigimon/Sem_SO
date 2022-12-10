@@ -10,12 +10,13 @@ from pynput import keyboard as kb
 accion = None
 
 class Simulacion(QWidget):
-    def __init__(self, _procesos):
+    def __init__(self, _procesos, _quantum):
         super(Simulacion, self).__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.procesos_iniciales = _procesos
         self.total_procesos = len(_procesos)
+        self.quantum = _quantum
 
 
         self.nuevo:Proceso = _procesos
@@ -53,6 +54,9 @@ class Simulacion(QWidget):
         global pause
         global accion
         cont_sistema = 0
+        tiempo_limite = 0
+
+        self.ui.Quantum_TB.setText(str(self.quantum))
 
         #Carga 3 procesos de Nuevo a Listo si hay suficientes procesos
         for i in range(0, 3):
@@ -87,7 +91,8 @@ class Simulacion(QWidget):
 
             #-------------------------------   Ejecucion del proceso   ----------------------------------------
             if(self.ejecucion != None):
-                while(self.ejecucion.tiempo > self.ejecucion.T_Servicio and accion == None):
+                tiempo_limite = round(self.cont_tiempo + self.quantum, 2)
+                while(self.ejecucion.tiempo > self.ejecucion.T_Servicio and accion == None and self.cont_tiempo < tiempo_limite):
                     self.cont_tiempo = round(self.cont_tiempo + .1, 2)
                     self.ejecucion.T_Servicio = round(self.ejecucion.T_Servicio + .1, 2)
                     self.ejecucion.tiempoRestante = round(self.ejecucion.tiempoRestante - .1, 2)
@@ -150,9 +155,11 @@ class Simulacion(QWidget):
                 
 
             
-            #Termina proceso normalmente
+            
             if(self.ejecucion == None):
                 pass
+
+            #Termina proceso normalmente
             elif(self.ejecucion.tiempoRestante == 0):
                 self.ejecucion.estado = "Terminado"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
@@ -160,6 +167,7 @@ class Simulacion(QWidget):
                 self.terminado.append(self.ejecucion)
                 self.ejecucion = None
                 cont_sistema -= 1
+                
                 
             #Termina proceso por Error
             elif(accion == 1):
@@ -190,6 +198,12 @@ class Simulacion(QWidget):
             elif(accion == 4):
                 self.Mostrar_Tiempos()
                 accion = 2
+
+            #Mover proceso a Listo por tiempo
+            elif(self.cont_tiempo == tiempo_limite and len(self.listo) > 0):
+                self.ejecucion.estado = "Listo"
+                self.listo.append(self.ejecucion)
+                self.ejecucion = None
             
             self.imprimir_listos()
             self.imprimir_Ejecucion()
