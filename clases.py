@@ -12,6 +12,13 @@ class Proceso():
         self.estado = "Nuevo"
 
 
+        self.memoria = None
+        self.paginas = 0
+        self.pagina_sobrante = None
+        self.paginas_libres = 0
+        self.posiciones = []
+
+
         self.T_Bloqueado = 0
 
         self.T_Llegada = None
@@ -82,7 +89,15 @@ class Proceso():
 
     def genOperacion(self):
         self.operacion = random.randint(0, 5)
+        self.memoria = random.randint(6, 28)
         #Suma - 0, Resta - 1, Multiplicacion - 2, Division - 3, Modulo - 4, Potencia - 5
+
+        self.paginas += self.memoria // 5
+        if(self.memoria % 5 > 0):
+            self.pagina_sobrante = self.memoria % 5
+            self.paginas += 1
+
+        self.paginas_libres = self.paginas
 
         if(self.operacion == 0):
             self.valorA = random.randint(0, 100)
@@ -107,3 +122,4 @@ class Proceso():
         elif(self.operacion == 5):
             self.valorA = random.randint(0, 100)
             self.valorB = random.randint(0, 5)
+

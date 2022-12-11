@@ -1,6 +1,7 @@
 from PySide2.QtWidgets import QTextEdit
 from Simulacion_ui import Ui_Form
 from PySide2.QtWidgets import QMessageBox, QWidget, QTableWidgetItem, QApplication
+from PySide2.QtGui import QColor
 from clases import Proceso
 from Tiempos import Tiempos
 import time
@@ -25,17 +26,33 @@ class Simulacion(QWidget):
         self.terminado:Proceso = []
         self.ejecucion:Proceso = None
 
+
         self.cont_tiempo = 0
+
+        self.marcos = []
+        self.id_marcos = []
+        self.marcos_libres = 40
+        self.cont_sistema = 0
         
 
         self.ui.Nuevo_Boton.clicked.connect(self.sim)
+        self.ui.Detener_Boton.clicked.connect(self.detener)
         escuchador = kb.Listener(listener)
         escuchador.start()
+
+        
 
         pass
     
     def inicializar(self):
+
+        self.iniciar_memoria()
+
         self.imprimir_terminados()
+
+        for i in range(0, 40):
+            self.marcos.append(None)
+            self.id_marcos.append(None)
 
         self.cont_tiempo = 0
         self.nuevo = self.procesos_iniciales
@@ -46,6 +63,9 @@ class Simulacion(QWidget):
 
         global accion
         accion = None
+
+
+        
         pass
 
     def sim(self):
@@ -53,31 +73,23 @@ class Simulacion(QWidget):
 
         global pause
         global accion
-        cont_sistema = 0
+        
         tiempo_limite = 0
 
         self.ui.Quantum_TB.setText(str(self.quantum))
 
-        #Carga 3 procesos de Nuevo a Listo si hay suficientes procesos
-        for i in range(0, 3):
-            if(cont_sistema < 3  and len(self.nuevo) > 0):
-                self.nuevo[0].T_Llegada = self.cont_tiempo
-                self.nuevo[0].estado = "Listo"
-                self.listo.append(self.nuevo[0])
-                cont_sistema += 1
-                self.nuevo.pop(0)
+        #Carga procesos de Nuevo a Listo
         
-        while(self.total_procesos != len(self.terminado)):
+        self.cargar_proceso()
+        
+        
+        while(self.total_procesos != len(self.terminado) and accion != 10):
 
             #Carga proceso de Nuevo a Listo
-            if(cont_sistema < 3 and len(self.nuevo) > 0):
-                self.nuevo[0].T_Llegada = self.cont_tiempo
-                self.nuevo[0].estado = "Listo"
-                self.listo.append(self.nuevo[0])
-                cont_sistema += 1
-                self.nuevo.pop(0)
+            if(len(self.nuevo) > 0):
+                self.cargar_proceso()
                 
-            #Mueve un proceso de Listo a Terminado
+            #Mueve un proceso de Listo a Ejecucion
             if(self.ejecucion == None and len(self.listo) > 0):
                 self.ejecucion = self.listo[0]
                 self.ejecucion.estado = "Ejecucion"
@@ -87,6 +99,12 @@ class Simulacion(QWidget):
                     self.ejecucion.T_Respuesta = self.cont_tiempo
 
             self.ui.Nuevos_TB.setText(str(len(self.nuevo)))
+            if(len(self.nuevo) > 0):
+                self.ui.NextID_TB.setText(str(self.nuevo[0].id))
+                self.ui.NextTam_TB.setText(str(self.nuevo[0].memoria))
+            else:
+                self.ui.NextID_TB.setText("")
+                self.ui.NextTam_TB.setText("")
             QApplication.processEvents()
 
             #-------------------------------   Ejecucion del proceso   ----------------------------------------
@@ -164,9 +182,10 @@ class Simulacion(QWidget):
                 self.ejecucion.estado = "Terminado"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
                 self.ejecucion.calcular_resultado(False)
+                self.imprimir_memoria(self.ejecucion, "white")
+                self.descargar_proceso()
                 self.terminado.append(self.ejecucion)
                 self.ejecucion = None
-                cont_sistema -= 1
                 
                 
             #Termina proceso por Error
@@ -174,9 +193,10 @@ class Simulacion(QWidget):
                 self.ejecucion.estado = "Terminado"
                 self.ejecucion.T_Finalizacion = self.cont_tiempo
                 self.ejecucion.calcular_resultado(True)
+                self.imprimir_memoria(self.ejecucion, "white")
+                self.descargar_proceso()
                 self.terminado.append(self.ejecucion)
                 self.ejecucion = None
-                cont_sistema -= 1
                 accion = None
 
             
@@ -214,15 +234,127 @@ class Simulacion(QWidget):
         
         self.Mostrar_Tiempos()
 
-        
+    
+    def cargar_proceso(self):
+
+        while(self.marcos_libres >= self.nuevo[0].paginas_libres and len(self.nuevo) > 1):
+            
+            if(self.marcos[self.cont_sistema] == None and self.nuevo[0].paginas_libres > 1):
+                self.marcos[self.cont_sistema] = 5
+                self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                self.nuevo[0].paginas_libres -= 1
+                self.marcos_libres -= 1
+                self.nuevo[0].posiciones.append(self.cont_sistema)
+
+            elif(self.marcos[self.cont_sistema] == None and self.nuevo[0].paginas_libres == 1):
+
+                if(self.nuevo[0].pagina_sobrante == None):
+                    self.marcos[self.cont_sistema] = 5
+                    self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                    self.nuevo[0].paginas_libres -= 1
+                    self.marcos_libres -= 1
+                    self.nuevo[0].posiciones.append(self.cont_sistema)
+                    self.nuevo[0].estado = "Listo"
+
+                    self.nuevo[0].T_Llegada = self.cont_tiempo
+
+                    self.imprimir_memoria(self.nuevo[0], "blue")
+                    self.listo.append(self.nuevo[0])
+                    self.nuevo.pop(0)
+                    
+
+
+                elif(self.nuevo[0].pagina_sobrante > 0):
+                    self.marcos[self.cont_sistema] = self.nuevo[0].pagina_sobrante
+                    self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                    self.nuevo[0].paginas_libres -= 1
+                    self.marcos_libres -= 1
+                    self.nuevo[0].posiciones.append(self.cont_sistema)
+                    self.nuevo[0].estado = "Listo"
+
+                    self.nuevo[0].T_Llegada = self.cont_tiempo
+
+                    self.imprimir_memoria(self.nuevo[0], "blue")
+                    self.listo.append(self.nuevo[0])
+                    self.nuevo.pop(0)
+
+            if(self.cont_sistema < 39):
+                self.cont_sistema += 1
+            else:
+                self.cont_sistema =0
+            
+
+
+        if(self.marcos_libres >= self.nuevo[0].paginas_libres and len(self.nuevo) == 1):
+
+            while(self.nuevo[0].paginas_libres > 0):
+
+                if(self.marcos[self.cont_sistema] == None and self.nuevo[0].paginas_libres > 1):
+                    self.marcos[self.cont_sistema] = 5
+                    self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                    self.nuevo[0].paginas_libres -= 1
+                    self.marcos_libres -= 1
+                    self.nuevo[0].posiciones.append(self.cont_sistema)
+
+                elif(self.marcos[self.cont_sistema] == None and self.nuevo[0].paginas_libres == 1):
+
+                    if(self.nuevo[0].pagina_sobrante == None):
+                        self.marcos[self.cont_sistema] = 5
+                        self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                        self.nuevo[0].paginas_libres -= 1
+                        self.marcos_libres -= 1
+                        self.nuevo[0].posiciones.append(self.cont_sistema)
+                        
+
+
+                    elif(self.nuevo[0].pagina_sobrante > 0):
+                        self.marcos[self.cont_sistema] = self.nuevo[0].pagina_sobrante
+                        self.id_marcos[self.cont_sistema] = self.nuevo[0].id
+                        self.nuevo[0].paginas_libres -= 1
+                        self.marcos_libres -= 1
+                        self.nuevo[0].posiciones.append(self.cont_sistema)
+                        
+
+                if(self.cont_sistema < 39):
+                    self.cont_sistema += 1
+                else:
+                    self.cont_sistema = 0
+
+            self.nuevo[0].T_Llegada = self.cont_tiempo
+            self.nuevo[0].estado = "Listo"
+
+            self.imprimir_memoria(self.nuevo[0], "blue")
+            self.listo.append(self.nuevo[0])
+            self.nuevo.pop(0)
+
+
+        pass
+
+    def descargar_proceso(self):
+        while(self.ejecucion.paginas_libres < self.ejecucion.paginas):
+            
+            if(self.id_marcos[self.cont_sistema] == self.ejecucion.id):
+                self.marcos[self.cont_sistema] = None
+                self.id_marcos[self.cont_sistema] = None
+                self.marcos_libres += 1
+                self.ejecucion.paginas_libres += 1
+            
+            if(self.cont_sistema < 39):
+                self.cont_sistema += 1
+            else:
+                self.cont_sistema = 0
+
 
 
     def imprimir_listos(self):
-        headers = ["ID", "Tiempo Estimado", "Tiempo Ejecutado", "Tiempo en Espera"]
+        headers = ["ID", "Tiempo Estimado", "Tiempo Ejecutado", "Tiempo en Espera", "Paginas"]
 
-        self.ui.Listos_TW.setColumnCount(4)
+        self.ui.Listos_TW.setColumnCount(5)
         self.ui.Listos_TW.setRowCount(len(self.listo))
         self.ui.Listos_TW.setHorizontalHeaderLabels(headers)
+
+        
+
 
         cont = 0
         for f in self.listo:
@@ -230,20 +362,30 @@ class Simulacion(QWidget):
             tiempo = QTableWidgetItem(str(f.tiempo))
             tiempoT = QTableWidgetItem(str(f.T_Servicio))
             tiempoE = QTableWidgetItem(str(f.T_Espera))
+            paginas = QTableWidgetItem(str(f.paginas))
       
 
             self.ui.Listos_TW.setItem(cont, 0, id)
             self.ui.Listos_TW.setItem(cont, 1, tiempo)
             self.ui.Listos_TW.setItem(cont, 2, tiempoT)
             self.ui.Listos_TW.setItem(cont, 3, tiempoE)
+            self.ui.Listos_TW.setItem(cont, 4, paginas)
             cont += 1
+
+            self.imprimir_memoria(f, "blue")
+
+            
+                
+
+        
+
 
 
 
     def imprimir_Ejecucion(self):
-        headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido", "Tiempo Restante"]
+        headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido", "Tiempo Restante", "Paginas"]
 
-        self.ui.Ejecucion_TW.setColumnCount(5)
+        self.ui.Ejecucion_TW.setColumnCount(6)
         self.ui.Ejecucion_TW.setRowCount(1)
         self.ui.Ejecucion_TW.setHorizontalHeaderLabels(headers)
 
@@ -253,18 +395,25 @@ class Simulacion(QWidget):
             Tiempo_Esperado = QTableWidgetItem("")
             Tiempo_Transcurrido = QTableWidgetItem("")
             Tiempo_Restante = QTableWidgetItem("")
+            paginas = QTableWidgetItem("")
         else:
             id = QTableWidgetItem(str(self.ejecucion.id))
             operacion = QTableWidgetItem(str(self.ejecucion.Return_operacion()))
             Tiempo_Esperado = QTableWidgetItem(str(self.ejecucion.tiempo))
             Tiempo_Transcurrido = QTableWidgetItem(str(self.ejecucion.T_Servicio))
             Tiempo_Restante = QTableWidgetItem(str(self.ejecucion.tiempoRestante))
+            paginas = QTableWidgetItem(str(self.ejecucion.paginas))
+
+            self.imprimir_memoria(self.ejecucion, "green")
 
         self.ui.Ejecucion_TW.setItem(0, 0, id)
         self.ui.Ejecucion_TW.setItem(0, 1, operacion)
         self.ui.Ejecucion_TW.setItem(0, 2, Tiempo_Esperado)
         self.ui.Ejecucion_TW.setItem(0, 3, Tiempo_Transcurrido)
         self.ui.Ejecucion_TW.setItem(0, 4, Tiempo_Restante)
+        self.ui.Ejecucion_TW.setItem(0, 5, paginas)
+
+        
 
         pass
 
@@ -284,6 +433,8 @@ class Simulacion(QWidget):
             self.ui.Bloqueados_TW.setItem(cont, 0, id)
             self.ui.Bloqueados_TW.setItem(cont, 1, tiempo)
             cont += 1
+
+            self.imprimir_memoria(f, "red")
 
 
     def imprimir_terminados(self):
@@ -305,6 +456,59 @@ class Simulacion(QWidget):
             cont += 1
         pass
 
+    def imprimir_memoria(self, proceso,color):
+        headers2 = ["Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5"]
+        self.ui.Memoria_TW.setColumnCount(28)
+        self.ui.Memoria_TW.setRowCount(11)
+        self.ui.Memoria_TW.setHorizontalHeaderLabels(headers2)
+
+        for x in proceso.posiciones:
+            if(color == "white"):
+                id_proceso = QTableWidgetItem("")
+            else:
+                id_proceso = QTableWidgetItem(str(self.id_marcos[x]))
+
+            self.ui.Memoria_TW.setItem( (x + 4) % 11, (x + 4) // 11 * 7 + 1, id_proceso)
+
+            for y in range(0, 5):
+                fondo = QTableWidgetItem("")
+                fondo.setBackgroundColor(QColor("white"))
+                self.ui.Memoria_TW.setItem( (x + 4) % 11, (x + 4) // 11 * 7 + 2 + y, fondo)
+
+            for y in range(0, self.marcos[x]):
+                fondo = QTableWidgetItem("")
+                fondo.setBackgroundColor(QColor(color))
+                self.ui.Memoria_TW.setItem( (x + 4) % 11, (x + 4) // 11 * 7 + 2 + y, fondo)
+
+
+
+    def iniciar_memoria(self):
+        headers2 = ["Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5"]
+        self.ui.Memoria_TW.setColumnCount(28)
+        self.ui.Memoria_TW.setRowCount(11)
+        self.ui.Memoria_TW.setHorizontalHeaderLabels(headers2)
+
+        for i in range(0, 4):
+            so = QTableWidgetItem("SO")
+            self.ui.Memoria_TW.setItem( i , 1, so)
+
+            for x in range(0, 5):
+                fondo = QTableWidgetItem("")
+                fondo.setBackgroundColor(QColor("gray"))
+                self.ui.Memoria_TW.setItem( i, x + 2, fondo)
+
+        
+
+        for i in range(0, 44):
+            num_marco = QTableWidgetItem(str(i + 1))
+
+            self.ui.Memoria_TW.setItem( i % 11, i // 11 * 7, num_marco)
+            QApplication.processEvents()
+
+
+
+
+
     def Mostrar_Tiempos(self):
         procesos = []
         procesos.extend(self.terminado)
@@ -317,6 +521,10 @@ class Simulacion(QWidget):
         self.ventana_tiempos = Tiempos(procesos)
         self.ventana_tiempos.show()
         
+    def detener(self):
+        global accion
+        accion = 10
+
 
 def listener(tecla):
     global accion
