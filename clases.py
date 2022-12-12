@@ -123,3 +123,8 @@ class Proceso():
             self.valorA = random.randint(0, 100)
             self.valorB = random.randint(0, 5)
 
+    def export(self):
+        cadena = str(self.id) + "_" + str(self.valorA) + "_" + str(self.valorB) + "_" + str(self.operacion) + "_" + str(self.tiempo) + "_" + str(self.tiempoRestante) 
+        cadena += self.estado + "_" + str(self.memoria) + "_" + str(self.T_Llegada) + "_" + str(self.T_Respuesta) + "_" + str(self.T_Espera) + "_" + str(self.T_Servicio)
+        cadena += '\n'
+        return cadena

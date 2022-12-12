@@ -25,6 +25,7 @@ class Simulacion(QWidget):
         self.bloqueado:Proceso = []
         self.terminado:Proceso = []
         self.ejecucion:Proceso = None
+        self.suspendidos:Proceso = []
 
 
         self.cont_tiempo = 0
@@ -135,58 +136,58 @@ class Simulacion(QWidget):
                         else:
                             listo.T_Espera = round(listo.T_Espera + .1, 2)
 
-                    self.imprimir_listos()
-                    self.imprimir_Ejecucion()
-                    self.imprimir_bloqueados()
-                    self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
-                    QApplication.processEvents()
-            else:
-                while(len(self.bloqueado) > 0 and self.ejecucion == None):
-                    self.cont_tiempo = round(self.cont_tiempo + .1, 2)
-                    time.sleep(.1)
-
-
-                    #Aumento de tiempo de espera en procesos bloqueados
-                    for bloq in self.bloqueado:
-                        bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
-                        bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
-
-                        #Mueve proceso de Bloqueado a Listo
-                        if(bloq.T_Bloqueado == 7):
-                            bloq.estado = "Listo"
-                            self.listo.append(bloq)
-
-                    #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
-                    for listo in self.listo:
-                        if(listo in self.bloqueado):
-                            self.bloqueado.remove(listo)
-                        
-                        else:
-                            listo.T_Espera = round(listo.T_Espera + .1, 2)
+                    self.aumentar_tiempo_susp()
 
                     self.imprimir_listos()
                     self.imprimir_Ejecucion()
                     self.imprimir_bloqueados()
                     self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
                     QApplication.processEvents()
+            
+            elif(len(self.bloqueado) > 0):
+                self.cont_tiempo = round(self.cont_tiempo + .1, 2)
+                time.sleep(.1)
+
+
+                #Aumento de tiempo de espera en procesos bloqueados
+                for bloq in self.bloqueado:
+                    bloq.T_Bloqueado = round(bloq.T_Bloqueado + .1, 2)
+                    bloq.T_Espera = round(bloq.T_Bloqueado + .1, 2)
+
+                    #Mueve proceso de Bloqueado a Listo
+                    if(bloq.T_Bloqueado == 7):
+                        bloq.estado = "Listo"
+                        self.listo.append(bloq)
+
+                #Aumento de tiempo de espera en procesos listos o elimina procesos de bloqueado
+                for listo in self.listo:
+                    if(listo in self.bloqueado):
+                        self.bloqueado.remove(listo)
+                    
+                    else:
+                        listo.T_Espera = round(listo.T_Espera + .1, 2)
+
+                self.aumentar_tiempo_susp()
+
+                self.imprimir_listos()
+                self.imprimir_Ejecucion()
+                self.imprimir_bloqueados()
+                self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
+                QApplication.processEvents()
+                
+            #Aumenta el tiempo mientras hay Suspendidos
+            elif(len(self.suspendidos) > 0):
+                self.cont_tiempo = round(self.cont_tiempo + .1, 2)
+                time.sleep(.1)
+                self.ui.Tiempo_TB.setText(str(self.cont_tiempo))
+                self.aumentar_tiempo_susp()
 
                 
 
             
             
-            if(self.ejecucion == None):
+            if(self.ejecucion == None and accion == None):
                 pass
-
-            #Termina proceso normalmente
-            elif(self.ejecucion.tiempoRestante == 0):
-                self.ejecucion.estado = "Terminado"
-                self.ejecucion.T_Finalizacion = self.cont_tiempo
-                self.ejecucion.calcular_resultado(False)
-                self.imprimir_memoria(self.ejecucion, "white")
-                self.descargar_proceso()
-                self.terminado.append(self.ejecucion)
-                self.ejecucion = None
-                
                 
             #Termina proceso por Error
             elif(accion == 1):
@@ -219,11 +220,39 @@ class Simulacion(QWidget):
                 self.Mostrar_Tiempos()
                 accion = 2
 
+            #Suspender Proceso
+            elif(accion == 6):
+                if(len(self.bloqueado) > 0):
+                    self.imprimir_memoria(self.bloqueado[0], "white")
+                    self.suspender_proceso()
+                accion = None
+                self.escribir_suspendidos()
+
+            #Recuperar Suspendido
+            elif(accion == 7):
+                if(len(self.suspendidos) > 0):
+                    self.recuperar_suspendido()
+
+                accion = None
+                self.escribir_suspendidos()
+            
+            #Termina proceso normalmente
+            elif(self.ejecucion.tiempoRestante == 0):
+                self.ejecucion.estado = "Terminado"
+                self.ejecucion.T_Finalizacion = self.cont_tiempo
+                self.ejecucion.calcular_resultado(False)
+                self.imprimir_memoria(self.ejecucion, "white")
+                self.descargar_proceso()
+                self.terminado.append(self.ejecucion)
+                self.ejecucion = None
+
             #Mover proceso a Listo por tiempo
             elif(self.cont_tiempo == tiempo_limite and len(self.listo) > 0):
                 self.ejecucion.estado = "Listo"
                 self.listo.append(self.ejecucion)
                 self.ejecucion = None
+
+
             
             self.imprimir_listos()
             self.imprimir_Ejecucion()
@@ -344,6 +373,78 @@ class Simulacion(QWidget):
             else:
                 self.cont_sistema = 0
 
+    def suspender_proceso(self):
+        while(self.bloqueado[0].paginas_libres < self.bloqueado[0].paginas):
+            
+            if(self.id_marcos[self.cont_sistema] == self.bloqueado[0].id):
+                self.marcos[self.cont_sistema] = None
+                self.id_marcos[self.cont_sistema] = None
+                self.marcos_libres += 1
+                self.bloqueado[0].paginas_libres += 1
+            
+            if(self.cont_sistema < 39):
+                self.cont_sistema += 1
+            else:
+                self.cont_sistema = 0
+        
+        
+        self.suspendidos.append(self.bloqueado[0])
+        self.bloqueado.pop(0)
+
+    def recuperar_suspendido(self):
+        if(self.marcos_libres >= self.suspendidos[0].paginas_libres):
+            self.suspendidos[0].posiciones = []
+            while(self.suspendidos[0].paginas_libres > 0):
+
+                if(self.marcos[self.cont_sistema] == None and self.suspendidos[0].paginas_libres > 1):
+                    self.marcos[self.cont_sistema] = 5
+                    self.id_marcos[self.cont_sistema] = self.suspendidos[0].id
+                    self.suspendidos[0].paginas_libres -= 1
+                    self.marcos_libres -= 1
+                    self.suspendidos[0].posiciones.append(self.cont_sistema)
+
+                elif(self.marcos[self.cont_sistema] == None and self.suspendidos[0].paginas_libres == 1):
+
+                    if(self.suspendidos[0].pagina_sobrante == None):
+                        self.marcos[self.cont_sistema] = 5
+                        self.id_marcos[self.cont_sistema] = self.suspendidos[0].id
+                        self.suspendidos[0].paginas_libres -= 1
+                        self.marcos_libres -= 1
+                        self.suspendidos[0].posiciones.append(self.cont_sistema)
+                        
+
+
+                    elif(self.suspendidos[0].pagina_sobrante > 0):
+                        self.marcos[self.cont_sistema] = self.suspendidos[0].pagina_sobrante
+                        self.id_marcos[self.cont_sistema] = self.suspendidos[0].id
+                        self.suspendidos[0].paginas_libres -= 1
+                        self.marcos_libres -= 1
+                        self.suspendidos[0].posiciones.append(self.cont_sistema)
+                        
+
+                if(self.cont_sistema < 39):
+                    self.cont_sistema += 1
+                else:
+                    self.cont_sistema = 0
+
+            self.suspendidos[0].estado = "Listo"
+
+            self.imprimir_memoria(self.suspendidos[0], "blue")
+            self.listo.append(self.suspendidos[0])
+            self.suspendidos.pop(0)
+
+    def aumentar_tiempo_susp(self):
+        if(len(self.suspendidos) > 0):
+            for x in self.suspendidos:
+                x.T_Espera = round(x.T_Espera + .1, 2)
+
+    def escribir_suspendidos(self):
+        archivo = open("Suspendidos.txt", 'w')
+        for x in self.suspendidos:
+            txt = x.export()
+            archivo.write(txt)
+
+        archivo.close()
 
 
     def imprimir_listos(self):
@@ -375,13 +476,6 @@ class Simulacion(QWidget):
             self.imprimir_memoria(f, "blue")
 
             
-                
-
-        
-
-
-
-
     def imprimir_Ejecucion(self):
         headers = ["ID", "Operacion", "Tiempo Esperado", "Tiempo Transcurrido", "Tiempo Restante", "Paginas"]
 
@@ -481,7 +575,6 @@ class Simulacion(QWidget):
                 self.ui.Memoria_TW.setItem( (x + 4) % 11, (x + 4) // 11 * 7 + 2 + y, fondo)
 
 
-
     def iniciar_memoria(self):
         headers2 = ["Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5", "Marco", "ID", "1", "2", "3", "4", "5"]
         self.ui.Memoria_TW.setColumnCount(28)
@@ -504,9 +597,6 @@ class Simulacion(QWidget):
 
             self.ui.Memoria_TW.setItem( i % 11, i // 11 * 7, num_marco)
             QApplication.processEvents()
-
-
-
 
 
     def Mostrar_Tiempos(self):
@@ -545,3 +635,7 @@ def listener(tecla):
             accion = 3
         elif(tecla == kb.KeyCode.from_char('b')):
             accion = 4
+        elif(tecla == kb.KeyCode.from_char('s')):
+            accion = 6
+        elif(tecla == kb.KeyCode.from_char('r')):
+            accion = 7
